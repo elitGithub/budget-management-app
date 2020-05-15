@@ -44,7 +44,6 @@ class UI {
   }
 
   storeBudget(income) {
-    // this would normally point to an API call to a DB.
     let currentBudget = this.getTotalBudget() ?? 0;
     currentBudget = parseFloat(currentBudget) + parseFloat(income);
     localStorage.setItem('budget', JSON.stringify(currentBudget));
@@ -63,8 +62,11 @@ class UI {
     return sum;
   }
 
-  storeExpenseList(expense) {
-    // this would normally point to an API call to a DB.
+  storeExpenseList() {
+    localStorage.setItem('expensesList', JSON.stringify(this.itemList));
+  }
+
+  storeExpense(expense) {
     let itemList = this.getExpensesList();
     itemList.push(expense);
     localStorage.setItem('expensesList', JSON.stringify(itemList));
@@ -93,10 +95,8 @@ class UI {
 
   renderExpenseList() {
     this.itemList = this.getExpensesList();
-    let list = document.createElement('div');
     let child = '';
     let totalExpensesAmount = 0;
-    list.classList.add('expense');
     this.expenseList.innerHTML = `<div class="expense-list__info d-flex justify-content-between text-capitalize">
         <h5 class="list-item">expense title</h5>
         <h5 class="list-item">expense value</h5>
@@ -104,7 +104,7 @@ class UI {
        </div>`;
     for (const expensesKey of this.itemList) {
       totalExpensesAmount = parseFloat(totalExpensesAmount) + parseFloat(expensesKey.amount);
-      child += `<div class="expense-item d-flex justify-content-between align-items-baseline">
+      child += `<div><div class="expense-item d-flex justify-content-between align-items-baseline">
 
      <h6 class="expense-title mb-0 text-uppercase list-item">${expensesKey.text}</h6>
      <h5 class="expense-amount mb-0 list-item">- $ ${expensesKey.amount}</h5>
@@ -112,29 +112,55 @@ class UI {
      <div class="expense-icons list-item">
 
      <a href="#" class="edit-icon mx-2" data-id="${expensesKey.id}">
-     <i class="fas fa-edit"></i>
+     <i class="fas fa-edit" data-id="${expensesKey.id}"></i>
      </a>
      <a href="#" class="delete-icon" data-id="${expensesKey.id}">
-     <i class="fas fa-trash"></i>
+     <i class="fas fa-trash" data-id="${expensesKey.id}"></i>
      </a>
      </div>
-     </div>`;
+     </div>
+</div>`;
     }
-    list.innerHTML = child;
     this.expenseAmount.textContent = -totalExpensesAmount;
     this.showBalance();
-    this.expenseList.append(list);
+    this.expenseList.innerHTML += child;
+    this.addEventListeners();
   }
 
+  addEventListeners() {
+    const deleteIcons = document.querySelectorAll('.delete-icon');
+    for (const deleteIcon of deleteIcons) {
+      deleteIcon.addEventListener('click', e => {
+        e.preventDefault();
+        this.deleteExpense(e.target);
+      });
+    }
+    const editIcons = document.querySelectorAll('.edit-icon');
+    for (const editIcon of editIcons) {
+      editIcon.addEventListener('click', e => {
+        e.preventDefault();
+        this.editExpense(e.target);
+      });
+    }
+  }
 
   showExpense() {
     this.expenseAmount.textContent = this.expenseAmount.textContent - parseFloat(this.amountInput.value);
     this.renderExpenseList();
+    this.addEventListeners();
     this.showBalance();
   }
 
-  deleteExpense() {
-    console.log('hi');
+  deleteExpense(expense) {
+    console.log(this.itemList);
+    console.log(expense.dataset.id);
+    this.itemList = this.itemList.filter(item => item.id !== expense.dataset.id);
+    this.storeExpenseList();
+    this.renderExpenseList();
+  }
+
+  editExpense(expense) {
+    console.log(expense.dataset);
   }
 
   submitExpenseForm() {
@@ -149,8 +175,7 @@ class UI {
       }, 4000)
       return;
     }
-    this.itemID++;
-    this.storeExpenseList({id: this.itemID, type: 'expense', amount: this.amountInput.value, text: this.expenseInput.value});
+    this.storeExpense({id: Date.now(), type: 'expense', amount: this.amountInput.value, text: this.expenseInput.value});
     this.showExpense();
     this.expenseInput.value = '';
     this.amountInput.value = '';
@@ -167,18 +192,13 @@ function eventListeners() {
     ui.submitBudgetForm();
   })
   ui.renderExpenseList();
+  ui.addEventListeners();
 
 
   expenseForm.addEventListener('submit', function (e) {
     e.preventDefault();
     ui.submitExpenseForm();
   });
-
-  const deleteIcons = document.querySelectorAll('.delete-icon');
-  for (const deleteIcon of deleteIcons) {
-    deleteIcon.addEventListener('click', ui.deleteExpense)
-  }
-  const editIcons = document.querySelectorAll('.edit-icon');
 
 }
 
