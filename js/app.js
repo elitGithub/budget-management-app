@@ -62,8 +62,8 @@ class UI {
     return sum;
   }
 
-  storeExpenseList() {
-    localStorage.setItem('expensesList', JSON.stringify(this.itemList));
+  storeExpenseList(itemList) {
+    localStorage.setItem('expensesList', JSON.stringify(itemList));
   }
 
   storeExpense(expense) {
@@ -152,15 +152,16 @@ class UI {
   }
 
   deleteExpense(expense) {
-    console.log(this.itemList);
-    console.log(expense.dataset.id);
-    this.itemList = this.itemList.filter(item => item.id !== expense.dataset.id);
-    this.storeExpenseList();
+    this.itemList = this.itemList.filter(item => parseInt(item.id) !== parseInt(expense.dataset.id));
+    this.storeExpenseList(this.itemList);
     this.renderExpenseList();
   }
 
   editExpense(expense) {
-    console.log(expense.dataset);
+    let editItem = this.itemList.find(item => item.id === parseInt(expense.dataset.id));
+    this.deleteExpense(expense);
+    this.amountInput.value = editItem.amount;
+    this.expenseInput.value = editItem.text;
   }
 
   submitExpenseForm() {
